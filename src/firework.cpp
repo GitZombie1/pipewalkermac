@@ -4,11 +4,12 @@
 
 #include "firework.hpp"
 
-#include <cmath>
-
 #include "mtrand.hpp"
 
-Firework::Firework(const SDL_Rect& init)
+#define _USE_MATH_DEFINES
+#include <cmath>
+
+Firework::Firework(const SDL_FRect& init)
     : initial(init)
     , birth_time(0)
 {
@@ -16,7 +17,7 @@ Firework::Firework(const SDL_Rect& init)
 
 void Firework::update()
 {
-    const uint64_t cur_time = SDL_GetTicks64();
+    const uint64_t cur_time = SDL_GetTicks();
     uint64_t age = cur_time - birth_time;
     if (birth_time == 0 || age > age_limit) {
         // reinitialize

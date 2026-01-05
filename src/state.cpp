@@ -4,7 +4,7 @@
 
 #include "state.hpp"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #include <cstring>
 #include <vector>
@@ -38,25 +38,23 @@ public:
             std::string path = dir;
             path += state_file;
             SDL_free(dir);
-
-            io = SDL_RWFromFile(path.c_str(), readonly ? "rb" : "wb");
+            io = SDL_IOFromFile(path.c_str(), readonly ? "rb" : "wb");
         }
     }
 
     ~IniFile()
     {
         if (io) {
-            SDL_RWclose(io);
+            SDL_CloseIO(io);
         }
     }
 
     /** Write key-value. */
     bool write(const char* name, const std::string& value)
     {
-        return SDL_RWwrite(io, name, strlen(name), 1) &&
-            SDL_RWwrite(io, "=", 1, 1) &&
-            SDL_RWwrite(io, value.c_str(), 1, value.length()) &&
-            SDL_RWwrite(io, "\n", 1, 1);
+        return SDL_WriteIO(io, name, strlen(name)) && SDL_WriteIO(io, "=", 1) &&
+            SDL_WriteIO(io, value.c_str(), value.length()) &&
+            SDL_WriteIO(io, "\n", 1);
     }
 
     /** Read key-value array. */
@@ -65,7 +63,7 @@ public:
         std::vector<KeyValue> settings;
         std::vector<char> buffer(Level::max_size * Level::max_size + 128, 0);
 
-        const size_t rd = SDL_RWread(io, &buffer[0], 1, buffer.size());
+        const size_t rd = SDL_ReadIO(io, &buffer[0], buffer.size());
 
         size_t pos = 0;
         while (pos < rd) {
@@ -89,7 +87,7 @@ public:
         return settings;
     }
 
-    SDL_RWops* io;
+    SDL_IOStream* io;
 };
 
 bool State::load()

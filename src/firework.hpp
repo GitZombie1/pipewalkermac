@@ -4,27 +4,25 @@
 
 #pragma once
 
-#include <SDL2/SDL.h>
-
-#include <cstdint>
+#include <SDL3/SDL.h>
 
 struct Firework {
     /**
      * Constructor.
      * @param init initial position and size of the cell
      */
-    Firework(const SDL_Rect& init);
+    Firework(const SDL_FRect& init);
 
     /** Update firework state. */
     void update();
 
-    SDL_Rect current; ///< Current position and size
-    size_t variant;   ///< Texture variant [0-4)
-    double angle;     ///< Current angle
-    double alpha;     ///< Current transparency
+    SDL_FRect current; ///< Current position and size
+    size_t variant;    ///< Texture variant [0-4)
+    double angle;      ///< Current angle
+    double alpha;      ///< Current transparency
 
 private:
-    SDL_Rect initial;  ///< Initial position and size
+    SDL_FRect initial; ///< Initial position and size
     size_t birth_time; ///< Creation timestamp
     size_t age_limit;  ///< Age limit in ms
     float delta_x;     ///< Direction and diff of the final x coordinate

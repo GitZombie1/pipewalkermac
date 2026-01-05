@@ -14,10 +14,14 @@ List of supported distributives can be found on the [Repology page](https://repo
 
 ## Build
 
-To build a project you need a C++ compiler, meson, libraries SDL2 and SDL2 image:
-```
-sudo apt install build-essential libsdl2-dev libsdl2-image-dev
-meson setup --buildtype=release build
-ninja -C build
-sudo ninja -C build install
+To build the project you will need:
+- C++ compiler with support for the C++11 standard;
+- Meson build system;
+- SDL3 library.
+
+```shell
+sudo apt install build-essential libsdl3-dev
+meson setup my_build_dir
+meson compile -C my_build_dir
+meson install -C my_build_dir
 ```

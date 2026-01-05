@@ -6,6 +6,7 @@
 
 #include "buildcfg.h"
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 struct LevelSize {
@@ -34,8 +35,12 @@ bool Game::initialize(const State& state)
         printf("Failed to load textures\n");
         return false;
     }
-    render.load(skin_image);
-    SDL_FreeSurface(skin_image);
+    if (!render.load(skin_image)) {
+        SDL_DestroySurface(skin_image);
+        printf("Failed to create textures\n");
+        return false;
+    }
+    SDL_DestroySurface(skin_image);
 
     sound.initialize();
     sound.enable = state.sound;
@@ -63,33 +68,33 @@ bool Game::initialize(const State& state)
 void Game::handle_event(const SDL_Event& event)
 {
     switch (event.type) {
-        case SDL_KEYDOWN:
-            switch (event.key.keysym.sym) {
+        case SDL_EVENT_KEY_DOWN:
+            switch (event.key.key) {
                 case SDLK_ESCAPE:
-                case SDLK_q:
+                case SDLK_Q:
                     if (!puzzle_mode) {
                         puzzle_mode = true;
                     } else {
                         SDL_Event quit {};
-                        quit.type = SDL_QUIT;
+                        quit.type = SDL_EVENT_QUIT;
                         SDL_PushEvent(&quit);
                     }
                     break;
-                case SDLK_s:
+                case SDLK_S:
                     sound.enable = !sound.enable;
                     break;
-                case SDLK_r:
+                case SDLK_R:
                     if (puzzle_mode) {
                         reset_level(false);
                     }
                     break;
-                case SDLK_n:
+                case SDLK_N:
                     if (puzzle_mode && level.id < level.max_id) {
                         ++level.id;
                         reset_level(true);
                     }
                     break;
-                case SDLK_p:
+                case SDLK_P:
                     if (puzzle_mode && level.id > 1) {
                         --level.id;
                         reset_level(true);
@@ -97,17 +102,14 @@ void Game::handle_event(const SDL_Event& event)
                     break;
             }
             break;
-        case SDL_MOUSEBUTTONDOWN:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
             on_mouse_click(event.motion.x, event.motion.y, event.button.button);
             break;
-        case SDL_WINDOWEVENT:
-            if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                const SDL_WindowEvent& ev = event.window;
-                layout.resize(ev.data1, ev.data2);
-                if (!fireworks.empty()) {
-                    // reinit fireworks with new coordinates
-                    create_fireworks();
-                }
+        case SDL_EVENT_WINDOW_RESIZED:
+            layout.resize(event.window.data1, event.window.data2);
+            if (!fireworks.empty()) {
+                // reinit fireworks with new coordinates
+                create_fireworks();
             }
             break;
     }
@@ -163,8 +165,12 @@ void Game::save(State& state) const
 
 void Game::draw_puzzle()
 {
-    SDL_Rect dst = { 0, 0, static_cast<int>(layout.cell_size),
-                     static_cast<int>(layout.cell_size) };
+    SDL_FRect dst = {
+        0.0f,
+        0.0f,
+        static_cast<float>(layout.cell_size),
+        static_cast<float>(layout.cell_size),
+    };
 
     // cells background
     for (size_t y = 0; y < level.height; ++y) {
@@ -441,7 +447,7 @@ void Game::on_mouse_click_settings(int x, int y, int /*button*/)
 
     if (skin_image) {
         render.load(skin_image);
-        SDL_FreeSurface(skin_image);
+        SDL_DestroySurface(skin_image);
     }
 }
 
@@ -467,7 +473,7 @@ void Game::create_fireworks()
         for (size_t x = 0; x < level.width; ++x) {
             const Cell& cell = level.get_cell({ x, y });
             if (cell.object == Cell::Receiver) {
-                SDL_Rect rect;
+                SDL_FRect rect;
                 rect.x = layout.field.x + x * layout.cell_size;
                 rect.y = layout.field.y + y * layout.cell_size;
                 rect.w = layout.cell_size;

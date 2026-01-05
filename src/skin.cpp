@@ -6,10 +6,49 @@
 
 #include "buildcfg.h"
 
-#include <SDL2/SDL_image.h>
 #include <dirent.h>
 
 #include <cstring>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+#include <stb_image.h>
+#pragma GCC diagnostic pop
+
+/**
+ * Load PNG image.
+ * @param path to the image file
+ * @return image surface handle, nullptr on error
+ */
+static SDL_Surface* load_png(const char* path)
+{
+    int width, height, channels;
+    uint8_t* data = stbi_load(path, &width, &height, &channels, 4);
+
+    if (!data || width % 512 != 0 || height % 448 != 0 || channels != 4) {
+        stbi_image_free(data);
+        return nullptr;
+    }
+
+    SDL_Surface* tmp = SDL_CreateSurfaceFrom(
+        width, height, SDL_PIXELFORMAT_RGBA32, data, width * 4 /*RGBA*/);
+    if (!tmp) {
+        stbi_image_free(data);
+        return nullptr;
+    }
+
+    SDL_Surface* surface =
+        SDL_CreateSurface(width, height, SDL_PIXELFORMAT_RGBA32);
+    if (surface) {
+        SDL_BlitSurface(tmp, nullptr, surface, nullptr);
+    }
+
+    SDL_DestroySurface(tmp);
+    stbi_image_free(data);
+    return surface;
+}
 
 SDL_Surface* Skin::initialize(const std::string& name)
 {
@@ -19,12 +58,11 @@ SDL_Surface* Skin::initialize(const std::string& name)
 
     if (available.empty()) {
         // try portable variant
-        char* app_dir = SDL_GetBasePath();
+        const char* app_dir = SDL_GetBasePath();
         if (app_dir) {
             std::string path = app_dir;
             path += "data";
             search(path.c_str());
-            SDL_free(app_dir);
         }
     }
 
@@ -76,7 +114,7 @@ SDL_Surface* Skin::next()
 SDL_Surface* Skin::load(size_t index)
 {
     const std::string& path = available[index];
-    SDL_Surface* image = IMG_Load(path.c_str());
+    SDL_Surface* image = load_png(path.c_str());
     if (image) {
         name = get_name(path);
         current = index;

@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
+#include <SDL3/SDL.h>
 
 /** Sound subsystem. */
 class Sound {
@@ -40,15 +39,11 @@ private:
      */
     bool load(const char* dir);
 
-    /** Callback that feeds the audio device. */
-    static void feed(void* userdata, uint8_t* stream, int len);
-
     struct Wave {
-        uint8_t* data; ///< Plain wave data
-        size_t size;   ///< Size of wave data
+        Uint8* data; ///< Plain wave data
+        Uint32 size; ///< Size of wave data
     };
-    Wave waves[2] = {};
+    Wave waves[2]; ///< Wav data instances
 
-    Wave* current;   ///< Currently played wave
-    size_t position; ///< Current played position
+    SDL_AudioStream* stream; ///< Output audio stream
 };

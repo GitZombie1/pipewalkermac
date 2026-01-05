@@ -6,73 +6,65 @@
 
 #include "buildcfg.h"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
-#include <cstring>
 #include <string>
+
+// The only supported audio format
+constexpr const SDL_AudioSpec sound_spec = { SDL_AUDIO_S16, 2, 44100 };
 
 Sound::~Sound()
 {
     for (size_t i = 0; i < sizeof(waves) / sizeof(waves[0]); ++i) {
-        if (waves[i].data) {
-            SDL_FreeWAV(waves[i].data);
-        }
+        SDL_free(waves[i].data);
     }
 }
 
 bool Sound::initialize()
 {
-    if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        SDL_LogError(SDL_LOG_CATEGORY_AUDIO,
+                     "Sound subsystem initialization error: %s",
+                     SDL_GetError());
         return false;
     }
 
-    SDL_AudioSpec as;
-    memset(&as, 0, sizeof(as));
-    as.freq = 44100;
-    as.format = AUDIO_S16;
-    as.channels = 2;
-    as.samples = 512;
-    as.callback = &Sound::feed;
-    as.userdata = this;
-    if (SDL_OpenAudio(&as, nullptr) != 0) {
+    // initialize audio stream
+    stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+                                       &sound_spec, nullptr, nullptr);
+    if (!stream) {
+        SDL_LogError(SDL_LOG_CATEGORY_AUDIO,
+                     "Error initializing audio stream: %s", SDL_GetError());
         return false;
     }
-
-    SDL_PauseAudio(1); // set pause
 
     // load wave files
     if (!load(APP_DATADIR)) {
         // try portable variant
-        char* app_dir = SDL_GetBasePath();
-        if (app_dir) {
-            std::string path = app_dir;
-            path += "data";
-            SDL_free(app_dir);
-            load(path.c_str());
+        std::string path(SDL_GetBasePath());
+        path += "data";
+        if (!load(path.c_str())) {
+            return false;
         }
     }
 
-    return waves[0].data && waves[1].data;
+    return true;
 }
 
 void Sound::play(Sound::Type type)
 {
     if (enable) {
-        position = 0;
-        current = &waves[type];
-        if (current->data) {
-            SDL_PauseAudio(0);
-        }
+        SDL_PutAudioStreamData(stream, waves[type].data, waves[type].size);
+        SDL_ResumeAudioStreamDevice(stream);
     }
 }
 
 bool Sound::load(const char* dir)
 {
-    bool rc = true;
+    memset(waves, 0, sizeof(waves));
 
     for (size_t i = 0; i < sizeof(waves) / sizeof(waves[0]); ++i) {
         SDL_AudioSpec spec;
-        Uint32 len;
         std::string file = dir;
         switch (i) {
             case Clatz:
@@ -82,26 +74,26 @@ bool Sound::load(const char* dir)
                 file += "complete.wav";
                 break;
         }
-        if (SDL_LoadWAV(file.c_str(), &spec, &waves[i].data, &len)) {
-            waves[i].size = len;
-            rc |= true;
+        if (!SDL_LoadWAV(file.c_str(), &spec, &waves[i].data, &waves[i].size)) {
+            SDL_LogError(SDL_LOG_CATEGORY_AUDIO, "Error loading wav %s: %s",
+                         file.c_str(), SDL_GetError());
+            break;
+        }
+        if (spec.format != sound_spec.format ||
+            spec.channels != sound_spec.channels ||
+            spec.freq != sound_spec.freq) {
+            SDL_LogError(SDL_LOG_CATEGORY_AUDIO,
+                         "Error loading wav %s: unsupported format",
+                         file.c_str());
+            break;
         }
     }
 
-    return rc;
-}
-
-void Sound::feed(void* userdata, uint8_t* stream, int len)
-{
-    Sound* snd = reinterpret_cast<Sound*>(userdata);
-    Wave& wav = *snd->current;
-
-    const size_t remain = wav.size - snd->position;
-    const Uint32 write = remain < static_cast<Uint32>(len) ? remain : len;
-    memset(stream, 0, len);
-    SDL_MixAudio(stream, &wav.data[snd->position], write, SDL_MIX_MAXVOLUME);
-    snd->position += write;
-    if (snd->position >= wav.size) {
-        SDL_PauseAudio(1); // wave played, make pause
+    if (!waves[Clatz].data || !waves[Complete].data) {
+        SDL_free(waves[Clatz].data);
+        SDL_free(waves[Complete].data);
+        memset(waves, 0, sizeof(waves));
     }
+
+    return waves[Clatz].data && waves[Complete].data;
 }

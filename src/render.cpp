@@ -4,12 +4,10 @@
 
 #include "render.hpp"
 
-#include <SDL2/SDL_image.h>
-
 #include <cstring>
 #include <memory>
 
-using SdlSurface = std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)>;
+using SdlSurface = std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)>;
 
 /** Skin image splitter. */
 struct SkinImage {
@@ -91,10 +89,9 @@ struct SkinImage {
         dst.w = src.w;
         dst.h = src.h;
 
-        SdlSurface sub(SDL_CreateRGBSurface(0, dst.w, dst.h, 32, 0x000000ff,
-                                            0x0000ff00, 0x00ff0000, 0xff000000),
-                       &SDL_FreeSurface);
-        if (sub && SDL_BlitSurface(image, &src, sub.get(), &dst)) {
+        SdlSurface sub(SDL_CreateSurface(dst.w, dst.h, SDL_PIXELFORMAT_RGBA32),
+                       &SDL_DestroySurface);
+        if (sub && !SDL_BlitSurface(image, &src, sub.get(), &dst)) {
             return nullptr;
         }
         return sub.release();
@@ -122,7 +119,7 @@ bool Render::load(SDL_Surface* image)
                                 i == PipeStrShadow || i == PipeForkShadow);
 
         const TextureId id = static_cast<TextureId>(i - (is_shadow ? 1 : 0));
-        SdlSurface sub(splitter.get(id), &SDL_FreeSurface);
+        SdlSurface sub(splitter.get(id), &SDL_DestroySurface);
         if (!sub) {
             return false;
         }
@@ -170,33 +167,33 @@ void Render::flush()
 void Render::fill_background(int width, int height)
 {
     Texture& tex = textures[WindowBkg];
-    SDL_Rect dst;
+    SDL_FRect dst;
     dst.w = tex.rect.w;
     dst.h = tex.rect.h;
     for (dst.y = 0; dst.y < height; dst.y += dst.h) {
         for (dst.x = 0; dst.x < width; dst.x += dst.w) {
-            SDL_RenderCopy(render, tex.texture, &tex.rect, &dst);
+            SDL_RenderTexture(render, tex.texture, &tex.rect, &dst);
         }
     }
 }
 
-void Render::draw(TextureId id, SDL_Rect& dst, double angle, double alpha)
+void Render::draw(TextureId id, SDL_FRect& dst, double angle, double alpha)
 {
     Texture& tex = textures[id];
     SDL_SetTextureAlphaMod(tex.texture, alpha * 0xff);
-    SDL_RenderCopyEx(render, tex.texture, &tex.rect, &dst, angle, nullptr,
-                     SDL_FLIP_NONE);
+    SDL_RenderTextureRotated(render, tex.texture, &tex.rect, &dst, angle,
+                             nullptr, SDL_FLIP_NONE);
 }
 
 void Render::draw_text(const char* text, size_t size, int x, int y)
 {
     Texture& font = textures[Font];
 
-    SDL_Rect src;
+    SDL_FRect src;
     src.w = texunit_size;
     src.h = texunit_size;
 
-    SDL_Rect dst;
+    SDL_FRect dst;
     dst.x = x;
     dst.y = y;
     dst.w = size;
@@ -216,7 +213,7 @@ void Render::draw_text(const char* text, size_t size, int x, int y)
         src.x = row * texunit_size;
         src.y = col * texunit_size;
 
-        SDL_RenderCopy(render, font.texture, &src, &dst);
+        SDL_RenderTexture(render, font.texture, &src, &dst);
 
         dst.x += static_cast<float>(size) * 0.6;
         ++text;

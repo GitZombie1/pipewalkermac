@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include <SDL2/SDL.h>
-
-#include <string>
+#include <SDL3/SDL.h>
 
 /** UI renderer. */
 class Render {
@@ -78,7 +76,7 @@ public:
      * @param angle rotation angle
      * @param alpha transparency control
      */
-    void draw(TextureId id, SDL_Rect& dst, double angle = 0, double alpha = 1);
+    void draw(TextureId id, SDL_FRect& dst, double angle = 0, double alpha = 1);
 
     /**
      * Draw text.
@@ -99,7 +97,7 @@ public:
 private:
     /** Texture description. */
     struct Texture {
-        SDL_Rect rect;
+        SDL_FRect rect;
         SDL_Texture* texture;
     };
 

@@ -4,7 +4,7 @@
 
 #include "cell.hpp"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 bool Position::operator==(const Position& other) const
 {
@@ -150,7 +150,7 @@ Pipe::operator Type() const
 Cell::Status Cell::update()
 {
     if (rotation()) {
-        const Uint64 diff = SDL_GetTicks64() - rotate_start;
+        const Uint64 diff = SDL_GetTicks() - rotate_start;
         if (diff >= rotation_time) {
             // rotation completed
             rotate_start = 0;
@@ -171,7 +171,7 @@ double Cell::phase() const
     double phase = 1.0;
 
     if (rotation()) {
-        const Uint64 diff = SDL_GetTicks64() - rotate_start;
+        const Uint64 diff = SDL_GetTicks() - rotate_start;
         if (diff < rotation_time) {
             phase =
                 static_cast<double>(diff) / static_cast<double>(rotation_time);
@@ -208,7 +208,7 @@ void Cell::rotate(bool clockwise)
             rotate_twice = false;
         } else {
             // back rotation
-            const Uint64 tick = SDL_GetTicks64();
+            const Uint64 tick = SDL_GetTicks();
             const Uint64 passed = tick - rotate_start;
             const Uint64 rest = rotation_time - passed;
             rotate_start = tick - rest;
@@ -220,7 +220,7 @@ void Cell::rotate(bool clockwise)
         rotate_twice = false;
         rotate_pipe = pipe;
         rotate_clockwise = clockwise;
-        rotate_start = SDL_GetTicks64();
+        rotate_start = SDL_GetTicks();
         pipe.rotate(clockwise);
     }
 }

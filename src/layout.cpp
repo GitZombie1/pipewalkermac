@@ -15,12 +15,12 @@ bool Layout::Button::own(int x, int y) const
             y < rect.y + rect.h);
 }
 
-Layout::Button::operator SDL_Rect&()
+Layout::Button::operator SDL_FRect&()
 {
     return rect;
 }
 
-SDL_Rect* Layout::Button::operator->()
+SDL_FRect* Layout::Button::operator->()
 {
     return &rect;
 }
@@ -43,7 +43,7 @@ void Layout::update(size_t width, size_t height)
     level_height = height;
 
     // size of header and footer
-    size_t header_h = static_cast<size_t>(std::min(64, window.h / 10));
+    size_t header_h = static_cast<size_t>(std::min(64.0f, window.h / 10));
 
     // size of a single puzzle cell
     const int max_wnd_w = window.w - padding * 2;

@@ -21,7 +21,7 @@ BEGIN
       VALUE "FileDescription", "PipeWalker game"
       VALUE "FileVersion", APP_VERSION
       VALUE "InternalName", "PipeWalker"
-      VALUE "LegalCopyright", "Copyright (C) 2007-2024 Artem Senichev"
+      VALUE "LegalCopyright", "Copyright (C) 2007 Artem Senichev"
       VALUE "OriginalFilename", "PipeWalker.exe"
       VALUE "ProductName", "PipeWalker game"
       VALUE "ProductVersion", APP_VERSION

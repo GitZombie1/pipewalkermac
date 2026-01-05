@@ -1,0 +1,69 @@
+name: MinGW/x86_64
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_PATH: /tmp/build
+      INSTALL_PATH: /tmp/install
+
+    steps:
+
+    - name: Check out source code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get pipewalker version
+      run: echo "VERSION=$(git describe --tags --long --always | sed 's/^v//;s/-/./')" >> $GITHUB_OUTPUT
+      id: version
+
+    - name: Build docker image
+      run: |
+        docker build --tag=pipewalker:mingw \
+          --file=.github/workflows/Dockerfile.MinGW .
+
+    - name: Run docker container
+      run: |
+        mkdir -p ${{ env.INSTALL_PATH }}
+        chmod a+rw ${{ env.INSTALL_PATH }}
+        docker run --tty --detach --name=pipewalker \
+          --volume=$PWD:$PWD:ro \
+          --volume=${{ env.INSTALL_PATH }}:${{ env.INSTALL_PATH }}:Z \
+          --workdir=$PWD \
+          pipewalker:mingw
+
+    - name: Configure
+      run: |
+        docker exec pipewalker \
+          meson setup \
+            -D version=${{ steps.version.outputs.VERSION }} \
+            -D default_library=static \
+            -D cpp_link_args='-static' \
+            --prefix=/ \
+            --werror \
+            --strip \
+            --cross-file=.github/workflows/mingw.txt \
+            ${{ env.BUILD_PATH }}
+
+    - name: Compile
+      run: |
+        docker exec pipewalker \
+          meson compile -C ${{ env.BUILD_PATH }}
+
+    - name: Install
+      run: |
+        docker exec pipewalker \
+          env DESTDIR=${{ env.INSTALL_PATH }} \
+            meson install -C ${{ env.BUILD_PATH }}
+        docker exec pipewalker \
+          install -m644 --strip --strip-program=x86_64-w64-mingw32-strip \
+            /usr/x86_64-w64-mingw32/bin/SDL3.dll \
+            ${{ env.INSTALL_PATH }}/PipeWalker-${{ steps.version.outputs.VERSION }}/
+
+    - name: Upload dist
+      uses: actions/upload-artifact@v4
+      with:
+        name: pipewalker-${{ steps.version.outputs.VERSION }}-win64
+        path: ${{ env.INSTALL_PATH }}

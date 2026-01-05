@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 /** Window layout. */
 class Layout {
@@ -14,10 +14,10 @@ public:
         /** Check if coordinates belong to the button. */
         bool own(int x, int y) const;
 
-        operator SDL_Rect&();
-        SDL_Rect* operator->();
+        operator SDL_FRect&();
+        SDL_FRect* operator->();
 
-        SDL_Rect rect;
+        SDL_FRect rect;
     };
 
     /** Checkbox. */
@@ -43,9 +43,9 @@ public:
     size_t level_height; ///< Level height
     size_t cell_size;    ///< Size of a single puzzle cell
 
-    SDL_Rect window; ///< Window size
-    SDL_Rect title;  ///< Title "PieWalker"
-    SDL_Rect field;  ///< Puzzle field
+    SDL_FRect window; ///< Window size
+    SDL_FRect title;  ///< Title "PieWalker"
+    SDL_FRect field;  ///< Puzzle field
 
     // Footer buttons
     Button reset;

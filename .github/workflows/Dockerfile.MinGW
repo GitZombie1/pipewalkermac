@@ -1,0 +1,25 @@
+FROM archlinux:latest
+
+RUN pacman --sync --sysupgrade --refresh --refresh --noconfirm \
+    make \
+    meson \
+    mingw-w64-gcc \
+    pkgconf \
+    wget
+
+RUN mkdir -p /tmp/sdl && \
+    wget -qO- https://github.com/libsdl-org/SDL/releases/download/release-3.4.0/SDL3-devel-3.4.0-mingw.tar.gz | tar -xz --strip-components 1 -C /tmp/sdl && \
+    make DESTDIR=/usr/x86_64-w64-mingw32 -C /tmp/sdl install-x86_64 && \
+    rm -rf /tmp/sdl
+
+RUN echo "#!/bin/sh" > /usr/bin/x86_64-w64-mingw32-pkg-config && \
+    echo "export PKG_CONFIG_LIBDIR=/usr/x86_64-w64-mingw32/lib/pkgconfig:/usr/x86_64-w64-mingw32/share/pkgconfig" >> /usr/bin/x86_64-w64-mingw32-pkg-config && \
+    echo "pkg-config \"\$@\"" >> /usr/bin/x86_64-w64-mingw32-pkg-config && \
+    chmod a+x /usr/bin/x86_64-w64-mingw32-pkg-config
+
+RUN useradd --create-home builder
+
+ENV USER=builder
+ENV HOME=/home/builder
+
+USER builder

@@ -4,8 +4,7 @@
 
 #include "buildcfg.h"
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <SDL3/SDL.h>
 #include <getopt.h>
 
 #include <cstdlib>
@@ -16,25 +15,21 @@
 bool run(State& state)
 {
     // initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         printf("Couldn't initialize SDL: %s\n", SDL_GetError());
         return false;
     }
-    IMG_Init(IMG_INIT_PNG);
 
     // create window
-    SDL_Window* window = SDL_CreateWindow("PipeWalker", SDL_WINDOWPOS_UNDEFINED,
-                                          SDL_WINDOWPOS_UNDEFINED, 480, 600,
-                                          SDL_WINDOW_RESIZABLE);
+    SDL_Window* window =
+        SDL_CreateWindow("PipeWalker", 480, 600, SDL_WINDOW_RESIZABLE);
     if (!window) {
         printf("Failed to create window: %s\n", SDL_GetError());
         return false;
     }
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
     // create renderer
-    SDL_Renderer* render =
-        SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* render = SDL_CreateRenderer(window, nullptr);
     if (!render) {
         printf("Failed to create renderer: %s\n", SDL_GetError());
         return false;
@@ -51,7 +46,7 @@ bool run(State& state)
     while (!quit) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (event.type != SDL_QUIT) {
+            if (event.type != SDL_EVENT_QUIT) {
                 game.handle_event(event);
             } else {
                 quit = true;
@@ -74,7 +69,6 @@ bool run(State& state)
     // clean up
     SDL_DestroyRenderer(render);
     SDL_DestroyWindow(window);
-    IMG_Quit();
     SDL_Quit();
 
     return true;
