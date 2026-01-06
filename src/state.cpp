@@ -7,6 +7,7 @@
 #include <SDL3/SDL.h>
 
 #include <cstring>
+#include <filesystem>
 #include <vector>
 
 #include "level.hpp"
@@ -35,10 +36,10 @@ public:
     {
         char* dir = SDL_GetPrefPath(nullptr, app_name);
         if (dir) {
-            std::string path = dir;
-            path += state_file;
+            std::filesystem::path path(dir);
+            path /= state_file;
             SDL_free(dir);
-            io = SDL_IOFromFile(path.c_str(), readonly ? "rb" : "wb");
+            io = SDL_IOFromFile(path.string().c_str(), readonly ? "rb" : "wb");
         }
     }
 

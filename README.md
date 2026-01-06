@@ -15,7 +15,7 @@ List of supported distributives can be found on the [Repology page](https://repo
 ## Build
 
 To build the project you will need:
-- C++ compiler with support for the C++11 standard;
+- C++ compiler with support for the C++20 standard;
 - Meson build system;
 - SDL3 library.
 

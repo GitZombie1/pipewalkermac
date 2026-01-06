@@ -6,6 +6,8 @@
 
 #include <SDL3/SDL.h>
 
+#include <filesystem>
+
 /** Sound subsystem. */
 class Sound {
 public:
@@ -37,13 +39,13 @@ private:
      * @param dir path to directory with sound files (wav)
      * @return false if load failed
      */
-    bool load(const char* dir);
+    bool load(const std::filesystem::path& dir);
 
     struct Wave {
         Uint8* data; ///< Plain wave data
         Uint32 size; ///< Size of wave data
     };
-    Wave waves[2]; ///< Wav data instances
+    Wave waves[2] = {}; ///< Wav data instances
 
     SDL_AudioStream* stream; ///< Output audio stream
 };

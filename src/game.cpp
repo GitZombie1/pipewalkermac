@@ -159,7 +159,7 @@ void Game::save(State& state) const
     state.level_height = level.height;
     state.level_wrap = level.wrap;
     state.level_pipes = level.save();
-    state.skin = skin.name;
+    state.skin = skin.name();
     state.sound = sound.enable;
 }
 
@@ -335,8 +335,8 @@ void Game::draw_settings()
     render.draw_text(skin_label, font_sz,
                      layout.skinprev->x + layout.skinprev->w,
                      layout.skinprev->y);
-    width = render.text_width(skin.name.c_str(), font_sz);
-    render.draw_text(skin.name.c_str(), font_sz,
+    width = render.text_width(skin.name().c_str(), font_sz);
+    render.draw_text(skin.name().c_str(), font_sz,
                      layout.window.w / 2 - width / 2,
                      layout.skinprev->y + layout.skinprev->h * 1.2);
     render.draw(Render::ButtonPrev, layout.skinprev);

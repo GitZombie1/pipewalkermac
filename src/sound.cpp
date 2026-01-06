@@ -8,7 +8,7 @@
 
 #include <SDL3/SDL.h>
 
-#include <string>
+#include <cstring>
 
 // The only supported audio format
 constexpr const SDL_AudioSpec sound_spec = { SDL_AUDIO_S16, 2, 44100 };
@@ -41,8 +41,8 @@ bool Sound::initialize()
     // load wave files
     if (!load(APP_DATADIR)) {
         // try portable variant
-        std::string path(SDL_GetBasePath());
-        path += "data";
+        std::filesystem::path path(SDL_GetBasePath());
+        path /= "data";
         if (!load(path.c_str())) {
             return false;
         }
@@ -59,24 +59,24 @@ void Sound::play(Sound::Type type)
     }
 }
 
-bool Sound::load(const char* dir)
+bool Sound::load(const std::filesystem::path& dir)
 {
-    memset(waves, 0, sizeof(waves));
-
     for (size_t i = 0; i < sizeof(waves) / sizeof(waves[0]); ++i) {
         SDL_AudioSpec spec;
-        std::string file = dir;
+        std::filesystem::path file = dir;
         switch (i) {
             case Clatz:
-                file += "clatz.wav";
+                file /= "clatz.wav";
                 break;
             case Complete:
-                file += "complete.wav";
+                file /= "complete.wav";
                 break;
         }
-        if (!SDL_LoadWAV(file.c_str(), &spec, &waves[i].data, &waves[i].size)) {
+        const std::string wav_path = file.string();
+        if (!SDL_LoadWAV(wav_path.c_str(), &spec, &waves[i].data,
+                         &waves[i].size)) {
             SDL_LogError(SDL_LOG_CATEGORY_AUDIO, "Error loading wav %s: %s",
-                         file.c_str(), SDL_GetError());
+                         wav_path.c_str(), SDL_GetError());
             break;
         }
         if (spec.format != sound_spec.format ||
@@ -84,7 +84,7 @@ bool Sound::load(const char* dir)
             spec.freq != sound_spec.freq) {
             SDL_LogError(SDL_LOG_CATEGORY_AUDIO,
                          "Error loading wav %s: unsupported format",
-                         file.c_str());
+                         wav_path.c_str());
             break;
         }
     }
@@ -93,7 +93,8 @@ bool Sound::load(const char* dir)
         SDL_free(waves[Clatz].data);
         SDL_free(waves[Complete].data);
         memset(waves, 0, sizeof(waves));
+        return false;
     }
 
-    return waves[Clatz].data && waves[Complete].data;
+    return true;
 }

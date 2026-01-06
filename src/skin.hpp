@@ -6,6 +6,7 @@
 
 #include <SDL3/SDL.h>
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -31,7 +32,11 @@ public:
      */
     SDL_Surface* next();
 
-    std::string name; ///< Skin name
+    /**
+     * Get current skin name.
+     * @return skin name
+     */
+    const std::string& name() const;
 
 private:
     /**
@@ -39,7 +44,7 @@ private:
      * @param dir path to directory with skin files (png)
      * @return true if at least one skin was found
      */
-    bool search(const std::string& dir);
+    bool search(const std::filesystem::path& dir);
 
     /**
      * Load skin.
@@ -48,13 +53,7 @@ private:
      */
     SDL_Surface* load(size_t index);
 
-    /**
-     * Get skin name from file path.
-     * @param path path to the skin file
-     * @return skin name (file name without dir and extension)
-     */
-    std::string get_name(const std::string& path) const;
-
-    std::vector<std::string> available; ///< List of available skins
-    size_t current;                     ///< Index of the current skin
+    std::vector<std::filesystem::path> skins; ///< List of available skins
+    size_t skin_index;                        ///< Index of the current skin
+    std::string skin_name;                    ///< Name of the current skin
 };
