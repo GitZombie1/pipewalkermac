@@ -37,8 +37,9 @@ private:
     /**
      * Search skin files in the specified directory.
      * @param dir path to directory with skin files (png)
+     * @return true if at least one skin was found
      */
-    void search(const char* dir);
+    bool search(const std::string& dir);
 
     /**
      * Load skin.

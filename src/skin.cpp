@@ -6,10 +6,6 @@
 
 #include "buildcfg.h"
 
-#include <dirent.h>
-
-#include <cstring>
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #define STB_IMAGE_IMPLEMENTATION
@@ -54,15 +50,13 @@ SDL_Surface* Skin::initialize(const std::string& name)
 {
     SDL_Surface* image = nullptr;
 
-    search(APP_DATADIR);
-
-    if (available.empty()) {
+    if (!search(APP_DATADIR)) {
         // try portable variant
         const char* app_dir = SDL_GetBasePath();
         if (app_dir) {
             std::string path = app_dir;
             path += "data";
-            search(path.c_str());
+            search(path);
         }
     }
 
@@ -122,25 +116,16 @@ SDL_Surface* Skin::load(size_t index)
     return image;
 }
 
-void Skin::search(const char* path)
+bool Skin::search(const std::string& path)
 {
-    const char* ext = ".png";
-    const size_t ext_len = strlen(ext);
-
-    DIR* dir = opendir(path);
-    if (dir) {
-        dirent* ent;
-        while ((ent = readdir(dir))) {
-            const size_t len = strlen(ent->d_name);
-            if (len <= ext_len || strcmp(ent->d_name + len - ext_len, ext)) {
-                continue; // not a skin file
-            }
-            std::string full_path = path;
-            full_path += ent->d_name;
-            available.push_back(full_path);
-        }
-        closedir(dir);
+    int count;
+    char** files = SDL_GlobDirectory(path.c_str(), "*.png", 0, &count);
+    for (int i = 0; i < count; ++i) {
+        const std::string skin_path = path + files[i];
+        available.push_back(skin_path);
     }
+    SDL_free(files);
+    return count > 0;
 }
 
 std::string Skin::get_name(const std::string& path) const
