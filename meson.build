@@ -40,6 +40,7 @@ endif
 # installation
 install_data(
     [
+        'data/Simple.png',
         'data/Hellsfire.png',
         'data/Network.png',
         'data/Plumbing.png',
