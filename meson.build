@@ -116,9 +116,8 @@ executable(
     'pipewalker',
     sources,
     dependencies: [
-        dependency('sdl3'),
+        dependency('sdl3', version: '>=3.4.0'),
     ],
-    include_directories: 'include',
     install: true,
     install_dir: install_bin_dir,
     win_subsystem : 'windows',

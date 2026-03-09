@@ -6,13 +6,6 @@
 
 #include "buildcfg.h"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_PNG
-#include <stb_image.h>
-#pragma GCC diagnostic pop
-
 /**
  * Load PNG image.
  * @param path to the image file
@@ -20,31 +13,19 @@
  */
 static SDL_Surface* load_png(const char* path)
 {
-    int width, height, channels;
-    using png_data = std::unique_ptr<uint8_t, decltype(&stbi_image_free)>;
-    png_data data(stbi_load(path, &width, &height, &channels, 4),
-                  stbi_image_free);
+    SDL_Surface* surface = SDL_LoadPNG(path);
 
-    if (!data.get() || width % 512 != 0 || height % 448 != 0 || channels != 4) {
-        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "Invalid skin format: %s", path);
+    if (!surface) {
+        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "Error loading skin from %s: %s",
+                     path, SDL_GetError());
+        return nullptr;
+    }
+    if (surface->w % 512 != 0 || surface->h % 448 != 0) {
+        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "Invalid skin file: %s", path);
+        SDL_DestroySurface(surface);
         return nullptr;
     }
 
-    SDL_Surface* tmp = SDL_CreateSurfaceFrom(
-        width, height, SDL_PIXELFORMAT_RGBA32, data.get(), width * 4 /*RGBA*/);
-    if (!tmp) {
-        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "Error creating skin surface: %s",
-                     SDL_GetError());
-        return nullptr;
-    }
-
-    SDL_Surface* surface =
-        SDL_CreateSurface(width, height, SDL_PIXELFORMAT_RGBA32);
-    if (surface) {
-        SDL_BlitSurface(tmp, nullptr, surface, nullptr);
-    }
-
-    SDL_DestroySurface(tmp);
     return surface;
 }
 
